@@ -1,4 +1,5 @@
 import ast
+import inspect
 import json
 import os
 from typing import Any, Dict, List, Optional, Tuple, Callable
@@ -70,7 +71,32 @@ TOOL_REGISTRY: Dict[str, Callable[..., str]] = {
 # ==========================
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = f"""You're a helpful assistant with great tool understanding.
+
+# Available tools
+<output_every_func_return_type>
+Tool Name: output_every_func_return_type
+Tool Documentation: {output_every_func_return_type.__doc__}
+Tool Signature: {inspect.signature(output_every_func_return_type)}
+</output_every_func_return_type>
+
+# Guidelines
+
+The tool calling syntax is
+
+```json
+{{
+    "tool": <tool_name>,
+    "args": {{
+        "argument1": <value>,
+        "argument2": <value>
+    }}
+}}
+```
+
+Tips
+- Always give "args" field. If a tool does need any arguments, please set "args" to a empty dict.
+"""
 
 
 def resolve_path(p: str) -> str:
@@ -109,6 +135,7 @@ def run_model_for_tool_call(system_prompt: str) -> Dict[str, Any]:
         options={"temperature": 0.3},
     )
     content = response.message.content
+    print(f"[DEBUG]\n{content}\n")
     return extract_tool_call(content)
 
 
@@ -140,6 +167,7 @@ def compute_expected_output() -> str:
 
 def test_your_prompt(system_prompt: str) -> bool:
     """Run once: require the model to produce a valid tool call; compare tool output to expected."""
+    print(f"[DEBUG]\n{system_prompt}\n")
     expected = compute_expected_output()
     for _ in range(NUM_RUNS_TIMES):
         try:

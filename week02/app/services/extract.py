@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-import os
 import re
+from typing import Optional
 
-from dotenv import load_dotenv
-from ollama import chat
+from ollama import Client
 from pydantic import BaseModel
 
-load_dotenv()
+from app.config import settings
+from app.services.exceptions import (
+    OllamaConnectionException,
+    OllamaServiceException,
+    ValidationException,
+)
 
 
 class ActionItems(BaseModel):
@@ -70,23 +74,25 @@ def extract_action_items(text: str) -> list[str]:
     return unique
 
 
-def extract_action_items_llm(text: str, model: str | None = None) -> list[str]:
+def extract_action_items_llm(text: str, model: Optional[str] = None) -> list[str]:
     """
     Extract action items from text using Ollama LLM with structured outputs.
 
     Args:
         text: Input text to extract action items from
-        model: Ollama model name. If None, uses OLLAMA_MODEL env var or "llama3.1:8b"
+        model: Ollama model name. If None, uses settings.ollama.model
 
     Returns:
         List of extracted action items as strings
 
     Raises:
-        ValueError: If the LLM response cannot be parsed or doesn't match schema
-        Exception: For Ollama connection errors or model not found
+        OllamaConnectionException: For Ollama connection errors
+        OllamaServiceException: For Ollama service errors or model not found
+        ValidationException: If the LLM response cannot be parsed or doesn't match schema
     """
+    # Use configured model if not specified
     if model is None:
-        model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+        model = settings.ollama.model
 
     text = text.strip()
     if not text:
@@ -96,16 +102,36 @@ def extract_action_items_llm(text: str, model: str | None = None) -> list[str]:
 
 Text: {text}"""
 
-    response = chat(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        format=ActionItems.model_json_schema(),
-        stream=False,
-        options={"temperature": 0},
-    )
+    try:
+        response = Client(host=str(settings.ollama.base_url)).chat(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            format=ActionItems.model_json_schema(),
+            stream=False,
+            options={
+                "temperature": settings.ollama.temperature,
+                "timeout": settings.ollama.timeout,
+            },
+        )
+    except ConnectionError as e:
+        raise OllamaConnectionException(
+            message=f"Failed to connect to Ollama at {settings.ollama.base_url}",
+            details={"base_url": str(settings.ollama.base_url), "error": str(e)},
+        ) from e
+    except Exception as e:
+        raise OllamaServiceException(
+            message=f"Ollama service error: {str(e)}",
+            details={"model": model, "error": str(e)},
+        ) from e
 
-    result = ActionItems.model_validate_json(response.message.content)
-    return result.action_items
+    try:
+        result = ActionItems.model_validate_json(response.message.content)
+        return result.action_items
+    except Exception as e:
+        raise ValidationException(
+            message="Failed to parse LLM response",
+            details={"response": response.message.content, "error": str(e)},
+        )
 
 
 def _looks_imperative(sentence: str) -> bool:

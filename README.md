@@ -26,4 +26,4 @@ letters: h t t p s t a t u s
 last-to-first: s u t a t s p t t h
 ```
 
-⬆️ Show the character list for `httpstatus` *but* do not give the final answer directly (Success Rate: $10\%\rightarrow20\%$)
+⬆️ Show the character list for `httpstatus` *but* do not give the final answer directly (Success Rate: $10\%\rightarrow 20\%$)

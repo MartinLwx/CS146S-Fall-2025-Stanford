@@ -53,6 +53,29 @@ def extract_action_items(
     return action_item_service.extract_action_items(extract_request, use_llm=use_llm)
 
 
+@router.post(
+    "/extract-llm",
+    response_model=ExtractResponse,
+    summary="Extract action items using LLM",
+    description="Extract action items from text using Ollama LLM.",
+    responses={
+        400: {"description": "Validation error"},
+        500: {"description": "Internal server error"},
+        502: {"description": "External service error (Ollama)"},
+    },
+)
+def extract_action_items_llm_endpoint(
+    extract_request: ExtractRequest,
+    action_item_service: ActionItemService = Depends(get_action_item_service),
+) -> ExtractResponse:
+    """Extract action items from text using LLM.
+
+    - **text**: Text to extract action items from (required)
+    - **save_note**: Whether to save the input text as a note (optional, default: false)
+    """
+    return action_item_service.extract_action_items(extract_request, use_llm=True)
+
+
 @router.get(
     "",
     response_model=ActionItemListResponse,

@@ -33,7 +33,7 @@ class DatabaseSettings(BaseSettings):
 
 
 class OllamaSettings(BaseSettings):
-    model: str = Field(default="llama3.1:8b")
+    model: str = Field(default="qwen3:0.6b")
     base_url: AnyHttpUrl = Field(default="http://localhost:11434")
     timeout: int = Field(default=60, description="Timeout in seconds for Ollama API calls")
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)

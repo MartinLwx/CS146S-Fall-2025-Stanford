@@ -99,13 +99,13 @@ class TestExtractActionItemsLLM:
         """Test with explicit model parameter."""
         text = "- Test action item"
         # Use the default model that we know is available
-        items = extract_action_items_llm(text, model="llama3.1:8b")
+        items = extract_action_items_llm(text, model="qwen3:0.6b")
         assert isinstance(items, list)
         assert all(isinstance(item, str) for item in items)
 
     def test_env_model(self, monkeypatch):
         """Test OLLAMA_MODEL environment variable."""
-        monkeypatch.setenv("OLLAMA_MODEL", "llama3.1:8b")
+        monkeypatch.setenv("OLLAMA_MODEL", "qwen3:0.6b")
         text = "TODO: Test env variable"
         items = extract_action_items_llm(text)
         assert isinstance(items, list)

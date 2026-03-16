@@ -30,4 +30,4 @@ last-to-first: s u t a t s p t t h
 
 ### Week02
 
-I use `DeepSeek Reasoner` and the [opencode](https://opencode.ai/) to do the exercise. The prompts I used can be found in [prompts.md](./week02/prompts.md)
+I use the [opencode](https://opencode.ai/) with `DeepSeek Chat/Reasoner` and `Minimax M2.5 Free` to do the exercise. The prompts are mainly take from the [assignment](./week02/assignment.md).

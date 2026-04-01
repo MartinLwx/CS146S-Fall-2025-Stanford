@@ -44,27 +44,22 @@ docs/                   # TASKS for agent-driven workflows
 
 ### Quickstart
 
-1) Activate your conda environment.
 
-```bash
-conda activate cs146s
-```
-
-2) (Optional) Install pre-commit hooks
+1) (Optional) Install pre-commit hooks
 
 ```bash
 pre-commit install
 ```
 
-3) Run the app (from `week4/` directory)
+2) Run the app (from `week4/` directory)
 
 ```bash
 make run
 ```
 
-4) Open `http://localhost:8000` for the frontend and `http://localhost:8000/docs` for the API docs.
+3) Open `http://localhost:8000` for the frontend and `http://localhost:8000/docs` for the API docs.
 
-5) Play around with the starter application to get a feel for its current features and functionality.
+4) Play around with the starter application to get a feel for its current features and functionality.
 
 
 ### Testing

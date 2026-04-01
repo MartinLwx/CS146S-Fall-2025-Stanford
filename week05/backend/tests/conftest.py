@@ -12,6 +12,18 @@ from sqlalchemy.orm import sessionmaker
 
 
 @pytest.fixture()
+def seed_notes(client: TestClient) -> Generator[None, None, None]:
+    notes = [
+        {"title": "First note", "content": "This is the first note content"},
+        {"title": "Second note", "content": "Second note with more text"},
+        {"title": "Third note", "content": "Third note for testing"},
+    ]
+    for note in notes:
+        client.post("/notes/", json=note)
+    yield
+
+
+@pytest.fixture()
 def client() -> Generator[TestClient, None, None]:
     db_fd, db_path = tempfile.mkstemp()
     os.close(db_fd)

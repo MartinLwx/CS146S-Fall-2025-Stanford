@@ -12,6 +12,23 @@
 
       <section>
         <h2>Notes</h2>
+        <div class="search-bar">
+          <input id="note-search" placeholder="Search notes..." />
+          <select id="sort-select">
+            <option value="created_desc">Newest First</option>
+            <option value="created_asc">Oldest First</option>
+            <option value="title_asc">Title A-Z</option>
+            <option value="title_desc">Title Z-A</option>
+          </select>
+        </div>
+        <div class="pagination-info">
+          <span id="result-count"></span>
+          <span id="page-info"></span>
+        </div>
+        <div class="pagination-controls">
+          <button id="prev-page">Previous</button>
+          <button id="next-page">Next</button>
+        </div>
         <form id="note-form">
           <input id="note-title" placeholder="Title" required />
           <input id="note-content" placeholder="Content" required />

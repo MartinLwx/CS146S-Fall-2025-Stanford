@@ -1,20 +1,50 @@
-from typing import Optional
+from collections.abc import Generator
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Note
-from ..schemas import NoteCreate, NoteRead
+from ..schemas import NoteCreate, NoteRead, PaginatedNoteResponse
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-@router.get("/", response_model=list[NoteRead])
-def list_notes(db: Session = Depends(get_db)) -> list[NoteRead]:
-    rows = db.execute(select(Note)).scalars().all()
-    return [NoteRead.model_validate(row) for row in rows]
+def apply_sort(query, sort: str):
+    match sort:
+        case "created_desc":
+            return query.order_by(Note.id.desc())
+        case "created_asc":
+            return query.order_by(Note.id.asc())
+        case "title_asc":
+            return query.order_by(Note.title.asc())
+        case "title_desc":
+            return query.order_by(Note.title.desc())
+        case _:
+            return query.order_by(Note.id.desc())
+
+
+@router.get("/", response_model=PaginatedNoteResponse)
+def list_notes(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    sort: str = Query(default="created_desc"),
+    db: Session = Depends(get_db),
+) -> Generator[PaginatedNoteResponse, None, None]:
+    total = db.execute(select(func.count(Note.id))).scalar() or 0
+    offset = (page - 1) * page_size
+    rows = (
+        db.execute(select(Note).order_by(Note.id.desc()).offset(offset).limit(page_size))
+        .scalars()
+        .all()
+    )
+    return PaginatedNoteResponse(
+        items=[NoteRead.model_validate(row) for row in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.post("/", response_model=NoteRead, status_code=201)
@@ -26,17 +56,31 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     return NoteRead.model_validate(note)
 
 
-@router.get("/search/", response_model=list[NoteRead])
-def search_notes(q: Optional[str] = None, db: Session = Depends(get_db)) -> list[NoteRead]:
-    if not q:
-        rows = db.execute(select(Note)).scalars().all()
-    else:
-        rows = (
-            db.execute(select(Note).where((Note.title.contains(q)) | (Note.content.contains(q))))
-            .scalars()
-            .all()
+@router.get("/search/", response_model=PaginatedNoteResponse)
+def search_notes(
+    q: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    sort: str = Query(default="created_desc"),
+    db: Session = Depends(get_db),
+) -> PaginatedNoteResponse:
+    base_query = select(Note)
+    if q:
+        search_pattern = f"%{q}%"
+        base_query = base_query.where(
+            (func.lower(Note.title).like(func.lower(search_pattern)))
+            | (func.lower(Note.content).like(func.lower(search_pattern)))
         )
-    return [NoteRead.model_validate(row) for row in rows]
+    total = db.execute(select(func.count()).select_from(base_query.subquery())).scalar() or 0
+    offset = (page - 1) * page_size
+    query = apply_sort(base_query, sort).offset(offset).limit(page_size)
+    rows = db.execute(query).scalars().all()
+    return PaginatedNoteResponse(
+        items=[NoteRead.model_validate(row) for row in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{note_id}", response_model=NoteRead)

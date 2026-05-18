@@ -30,8 +30,16 @@ last-to-first: s u t a t s p t t h
 
 ### Week02
 
-I use the [opencode](https://opencode.ai/) with `DeepSeek Chat/Reasoner` and `Minimax M2.5 Free` to do the exercise. The prompts are mainly take from the [assignment](./week02/assignment.md).
+I use the [opencode](https://opencode.ai/) with `DeepSeek Chat/Reasoner` and `Minimax M2.5 Free` to do the exercise. The prompts are mainly taken from the [assignment](./week02/assignment.md).
 
 ### Week04
 
 I use the [opencode](https://opencode.ai/) with `Minimax M2.5 Free` to generate a [AGENTS.md](./week04/AGENTS.md) and write a customized slash command [`tests`](./week04/.opencode/commands/tests.md).
+
+### Week05
+
+I use the [opencode](https://opencode.ai/) with `Minimax M2.5 Free` to finish the task 02 without using Warp automations.
+
+### Week06
+
+I encountered network issues when using `semgrep`, so I just skipped this assignment.

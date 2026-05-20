@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, inspect as sa_inspect, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -25,12 +25,13 @@ def list_items(
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(ActionItem, sort_field):
+    valid_fields = {c.key for c in sa_inspect(ActionItem).columns}
+    if sort_field in valid_fields:
         stmt = stmt.order_by(order_fn(getattr(ActionItem, sort_field)))
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid sort field: '{sort_field}'. Valid fields: id, description, completed, created_at, updated_at",
+            detail=f"Invalid sort field: '{sort_field}'. Valid fields: {', '.join(sorted(valid_fields))}",
         )
 
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
@@ -68,7 +69,6 @@ def complete_item(item_id: int, db: Session = Depends(get_db)) -> ActionItemRead
     if not item:
         raise HTTPException(status_code=404, detail="Action item not found")
     item.completed = True
-    db.add(item)
     db.flush()
     db.refresh(item)
     return ActionItemRead.model_validate(item)
@@ -80,7 +80,6 @@ def reopen_item(item_id: int, db: Session = Depends(get_db)) -> ActionItemRead:
     if not item:
         raise HTTPException(status_code=404, detail="Action item not found")
     item.completed = False
-    db.add(item)
     db.flush()
     db.refresh(item)
     return ActionItemRead.model_validate(item)
@@ -95,7 +94,6 @@ def patch_item(item_id: int, payload: ActionItemPatch, db: Session = Depends(get
         item.description = payload.description
     if payload.completed is not None:
         item.completed = payload.completed
-    db.add(item)
     db.flush()
     db.refresh(item)
     return ActionItemRead.model_validate(item)

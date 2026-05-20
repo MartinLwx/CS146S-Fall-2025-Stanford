@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, inspect as sa_inspect, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -25,12 +25,13 @@ def list_notes(
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(Note, sort_field):
+    valid_fields = {c.key for c in sa_inspect(Note).columns}
+    if sort_field in valid_fields:
         stmt = stmt.order_by(order_fn(getattr(Note, sort_field)))
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid sort field: '{sort_field}'. Valid fields: id, title, content, created_at, updated_at",
+            detail=f"Invalid sort field: '{sort_field}'. Valid fields: {', '.join(sorted(valid_fields))}",
         )
 
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
@@ -55,7 +56,6 @@ def patch_note(note_id: int, payload: NotePatch, db: Session = Depends(get_db)) 
         note.title = payload.title
     if payload.content is not None:
         note.content = payload.content
-    db.add(note)
     db.flush()
     db.refresh(note)
     return NoteRead.model_validate(note)

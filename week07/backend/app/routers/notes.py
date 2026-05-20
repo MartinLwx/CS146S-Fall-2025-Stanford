@@ -15,8 +15,8 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 def list_notes(
     db: Session = Depends(get_db),
     q: Optional[str] = None,
-    skip: int = 0,
-    limit: int = Query(50, le=200),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     sort: str = Query("-created_at", description="Sort by field, prefix with - for desc"),
 ) -> list[NoteRead]:
     stmt = select(Note)
@@ -28,7 +28,10 @@ def list_notes(
     if hasattr(Note, sort_field):
         stmt = stmt.order_by(order_fn(getattr(Note, sort_field)))
     else:
-        stmt = stmt.order_by(desc(Note.created_at))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort field: '{sort_field}'. Valid fields: id, title, content, created_at, updated_at",
+        )
 
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
     return [NoteRead.model_validate(row) for row in rows]
@@ -64,5 +67,13 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return NoteRead.model_validate(note)
+
+
+@router.delete("/{note_id}", status_code=204)
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    db.delete(note)
 
 

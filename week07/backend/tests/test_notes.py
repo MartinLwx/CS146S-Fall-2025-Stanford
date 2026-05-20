@@ -23,3 +23,52 @@ def test_create_list_and_patch_notes(client):
     assert patched["title"] == "Updated"
 
 
+def test_delete_note(client):
+    r = client.post("/notes/", json={"title": "ToDelete", "content": "bye"})
+    assert r.status_code == 201
+    note_id = r.json()["id"]
+
+    r = client.delete(f"/notes/{note_id}")
+    assert r.status_code == 204
+
+    r = client.get(f"/notes/{note_id}")
+    assert r.status_code == 404
+
+
+def test_delete_note_not_found(client):
+    r = client.delete("/notes/99999")
+    assert r.status_code == 404
+
+
+def test_create_note_empty_title(client):
+    r = client.post("/notes/", json={"title": "", "content": "ok"})
+    assert r.status_code == 422
+
+
+def test_create_note_empty_content(client):
+    r = client.post("/notes/", json={"title": "ok", "content": ""})
+    assert r.status_code == 422
+
+
+def test_patch_note_empty_title(client):
+    r = client.post("/notes/", json={"title": "X", "content": "Y"})
+    note_id = r.json()["id"]
+    r = client.patch(f"/notes/{note_id}", json={"title": ""})
+    assert r.status_code == 422
+
+
+def test_list_notes_invalid_sort(client):
+    r = client.get("/notes/", params={"sort": "bogus"})
+    assert r.status_code == 400
+
+
+def test_list_notes_negative_skip(client):
+    r = client.get("/notes/", params={"skip": -1})
+    assert r.status_code == 422
+
+
+def test_list_notes_zero_limit(client):
+    r = client.get("/notes/", params={"limit": 0})
+    assert r.status_code == 422
+
+

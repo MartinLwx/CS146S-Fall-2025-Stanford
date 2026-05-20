@@ -36,11 +36,7 @@ async function loadActions(params = {}) {
       const btn = document.createElement('button');
       btn.textContent = 'Reopen';
       btn.onclick = async () => {
-        await fetchJSON(`/action-items/${a.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completed: false }),
-        });
+        await fetchJSON(`/action-items/${a.id}/reopen`, { method: 'PUT' });
         loadActions(params);
       };
       li.appendChild(btn);

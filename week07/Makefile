@@ -1,19 +1,17 @@
 .PHONY: run test format lint seed
 
 run:
-	PYTHONPATH=. uvicorn backend.app.main:app --reload --host $${HOST:-127.0.0.1} --port $${PORT:-8000}
+	uv run uvicorn backend.app.main:app --reload --host $${HOST:-127.0.0.1} --port $${PORT:-8000}
 
 test:
-	PYTHONPATH=. pytest -q backend/tests
+	PYTHONPATH=. uv run pytest -q backend/tests
 
 format:
-	black .
-	ruff check . --fix
+	uv tool run black .
+	uv tool run ruff check . --fix
 
 lint:
-	ruff check .
+	uv tool run ruff check .
 
 seed:
-	PYTHONPATH=. python -c "from backend.app.db import apply_seed_if_needed; apply_seed_if_needed()"
-
-
+	uv run -c "from backend.app.db import apply_seed_if_needed; apply_seed_if_needed()"

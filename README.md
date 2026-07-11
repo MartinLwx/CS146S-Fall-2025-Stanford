@@ -51,3 +51,7 @@ I use the [opencode](https://opencode.ai/) with `DeepSeek V4 Pro` to finish the 
 I use a one-line prompt — I simply ask the agent to complete a task without providing any additional requirements. To my surprise, it does *more* than just finish the implementation. It also adds appropriate tests to verify that the implementation works correctly.
 
 I manually reviewed the changes and was quite satisfied with the results. I then started a new session and asked `DeepSeek V4 Pro` to review the code changes. It did identify a few issues related to code style and maintainability, but it found no logical bugs :)
+
+### Week08
+
+I just skipped this assignment :)
